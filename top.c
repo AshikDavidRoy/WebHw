@@ -4,61 +4,59 @@
 int tempCounter = 0;
 
 // Function to generate a new temporary variable
-char* newTemp() {
-    char tempVar[3];
-    sprintf(tempVar, "T%d", tempCounter++);
-    return tempVar;
+char newTemp() {
+    return 'T' + tempCounter++;
 }
 
 // Function to generate and print a three-address code
-void genCode(char* op, char* arg1, char* arg2, char* result) {
-    printf("%s := %s %s %s\n", result, arg1, op, arg2);
+void genCode(char op, char arg1, char arg2, char result) {
+    printf("%c = %c %c %c\n", result, arg1, op, arg2);
 }
 
 // Function to parse E
-void E(char* input, int* pos) {
-    char T1[3], T2[3];
-    T(input, pos);
-    while (input[*pos] == '+') {
-        (*pos)++;
-        char* op = "+";
-        T1 = newTemp();
-        T(input, pos);
-        T2 = newTemp();
-        genCode(op, T1, T2, T1);  // Generate code for E
-    }
-}
+void E(char* input, int* pos);
 
 // Function to parse T
-void T(char* input, int* pos) {
-    char F1[3], F2[3];
-    F(input, pos);
-    while (input[*pos] == '*') {
-        (*pos)++;
-        char* op = "*";
-        F1 = newTemp();
-        F(input, pos);
-        F2 = newTemp();
-        genCode(op, F1, F2, F1);  // Generate code for T
-    }
-}
+void T(char* input, int* pos);
 
 // Function to parse F
 void F(char* input, int* pos) {
-    if (input[*pos] == '(') {
+    if (isalpha(input[*pos])) {
+        char id = input[*pos];
+        (*pos)++;
+        genCode('=', id, ' ', id);  // Generate code for F (copying id to id)
+    } else if (input[*pos] == '(') {
         (*pos)++;
         E(input, pos);
         if (input[*pos] == ')') {
             (*pos)++;
         }
-    } else if (isalpha(input[*pos])) {
-        char id[2];
-        id[0] = input[*pos];
-        id[1] = '\0';
+    }
+}
+
+// Function to parse T
+void T(char* input, int* pos) {
+    F(input, pos);
+    while (input[*pos] == '*') {
+        char op = input[*pos];
         (*pos)++;
-        // Generate code for F (copying id to a temporary variable)
-        char T1[3] = newTemp();
-        genCode(":=", id, "-", T1);
+        char id1 = newTemp();
+        F(input, pos);
+        char id2 = newTemp();
+        genCode(op, id1, id2, id1);  // Generate code for T
+    }
+}
+
+// Function to parse E
+void E(char* input, int* pos) {
+    T(input, pos);
+    while (input[*pos] == '+') {
+        char op = input[*pos];
+        (*pos)++;
+        char id1 = newTemp();
+        T(input, pos);
+        char id2 = newTemp();
+        genCode(op, id1, id2, id1);  // Generate code for E
     }
 }
 
